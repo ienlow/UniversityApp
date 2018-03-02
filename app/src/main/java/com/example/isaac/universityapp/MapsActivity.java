@@ -26,6 +26,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -43,6 +44,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean mRequestingLocationUpdates = false;
     private LocationCallback mLocationCallback;
     private LocationRequest mLocationRequest = new LocationRequest();
+
 
 
     @Override
@@ -70,11 +72,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 for (Location location : locationResult.getLocations()) {
                     // Update UI with location data
                     // ...
+                    mMap.clear();
                     LatLng mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                    Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
-                    mMap.addCircle(new CircleOptions().center(radford).radius(1000));
-                    mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentLocation));
+                    mMap.addCircle(new CircleOptions().center(radford).radius(100));
+                    if (((radford.longitude - mCurrentLocation.longitude) < .001)
+                            && ((radford.longitude - mCurrentLocation.longitude) > -.001)
+                            && ((radford.latitude - mCurrentLocation.latitude) < .001)
+                            && ((radford.latitude - mCurrentLocation.latitude) > -.001)) {
+                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
+                    }
                 }
             };
         };
@@ -100,10 +107,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Add a marker in Radford and move the camera
         mMap.addMarker(new MarkerOptions().position(radford).title("Marker in Radford"));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
 
         createLocationRequest();
 
         startLocationUpdates();
+
+        mMap.setMyLocationEnabled(true);
     }
 
     /**

@@ -41,15 +41,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FusedLocationProviderClient mFusedLocationClient;
     private int DEFAULT_ZOOM = 15;
     private LatLng radford = new LatLng(37.1318, -80.5764477);
+    private LatLng lebanon = new LatLng(36.896034, -82.068117);
     private boolean mRequestingLocationUpdates = false;
     private LocationCallback mLocationCallback;
     private LocationRequest mLocationRequest = new LocationRequest();
+    private int i;
+    private String mMapState = "Points";
+    //import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper; use for db calls
 
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null)
+            Toast.makeText(this, "saved", Toast.LENGTH_SHORT).show();
+        else
+            i = 0;
         Intent intent = getIntent();
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -74,17 +83,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     // ...
                     mMap.clear();
                     LatLng mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentLocation));
-                    mMap.addCircle(new CircleOptions().center(radford).radius(100));
-                    if (((radford.longitude - mCurrentLocation.longitude) < .001)
-                            && ((radford.longitude - mCurrentLocation.longitude) > -.001)
-                            && ((radford.latitude - mCurrentLocation.latitude) < .001)
-                            && ((radford.latitude - mCurrentLocation.latitude) > -.001)) {
-                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_LONG).show();
+                    mMap.addCircle(new CircleOptions().center(lebanon).radius(100));
+                    if (((lebanon.longitude - mCurrentLocation.longitude) < .001)
+                            && ((lebanon.longitude - mCurrentLocation.longitude) > -.001)
+                            && ((lebanon.latitude - mCurrentLocation.latitude) < .001)
+                            && ((lebanon.latitude - mCurrentLocation.latitude) > -.001)) {
+                        i++;
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentLocation));
+                        Toast.makeText(getApplicationContext(), String.valueOf(i), Toast.LENGTH_SHORT).show();
                     }
                 }
             };
         };
+    }
+
+    // Restore instance state
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        i = savedInstanceState.getInt(mMapState);
     }
 
 
@@ -108,6 +124,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Add a marker in Radford and move the camera
         mMap.addMarker(new MarkerOptions().position(radford).title("Marker in Radford"));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
+        mMap.moveCamera(CameraUpdateFactory.newCameraPosition(mMap.getCameraPosition()));
 
         createLocationRequest();
 
@@ -135,9 +152,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onResume() {
         super.onResume();
-        if (mRequestingLocationUpdates) {
+        /*if (mRequestingLocationUpdates) {
             startLocationUpdates();
-        }
+        }*/
     }
 
     private void startLocationUpdates() {
@@ -152,7 +169,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onPause() {
         super.onPause();
-        stopLocationUpdates();
+        //stopLocationUpdates();
+    }
+
+    // Save instance state
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putInt(mMapState, i);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     private void stopLocationUpdates() {

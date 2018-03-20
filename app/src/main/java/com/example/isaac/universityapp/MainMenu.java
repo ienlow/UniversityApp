@@ -22,7 +22,7 @@ public class MainMenu extends AppCompatActivity {
     }
 
     public void mapsStart(View view) {
-        Intent intent = new Intent(this, MapsActivity.class);
+        Intent intent = new Intent(this, Timer.class);
         startActivity(intent);
     }
 }

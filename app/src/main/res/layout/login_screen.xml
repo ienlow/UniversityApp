@@ -29,4 +29,5 @@
         android:layout_marginTop="50dp"
         android:onClick="mainMenu"
         android:text="Login" />
+
 </LinearLayout>

@@ -15,8 +15,16 @@ import android.widget.Toast;
 
 import com.amazonaws.mobile.auth.core.IdentityManager;
 import com.amazonaws.mobile.client.AWSMobileClient;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -31,6 +39,11 @@ import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
+import com.google.gson.Gson;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by isaac on 3/20/2018.
@@ -47,7 +60,6 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
     private FusedLocationProviderClient mFusedLocationClient;
     private DynamoDBMapper dynamoDBMapper;
     private LocationsDO locationItem;
-    private IdentityManager identityManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,8 +77,9 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
         });
 
         // Instantiate a AmazonDynamoDBMapperClient
-        AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());
-        this.dynamoDBMapper = DynamoDBMapper.builder()
+        final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());
+        dynamoDBClient.setRegion(Region.getRegion(Regions.US_EAST_1));
+         dynamoDBMapper = DynamoDBMapper.builder()
                 .dynamoDBClient(dynamoDBClient)
                 .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
                 .build();
@@ -80,13 +93,19 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
                 .build();
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-
         locationItem = new LocationsDO();
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                locationItem = dynamoDBMapper.load(LocationsDO.class, "ienlow", "1");
+
+                locationItem = dynamoDBMapper.load(
+                        LocationsDO.class,
+                        "ienlow",
+                        "1");
+
+                // Item read
+                // Log.d("News Item:", newsItem.toString());
             }
         }).start();
 
@@ -97,8 +116,6 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
                     // Update UI with location data
                     // ...
                     LatLng mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                    //mMap.addCircle(new CircleOptions().center(lebanon).radius(100));
-                    //one = new CircleOptions().center(lebanon).radius(100);
                     if (((locationItem.getLongitude() - mCurrentLocation.longitude) < .001)
                             && ((locationItem.getLongitude() - mCurrentLocation.longitude) > -.001)
                             && ((locationItem.getLatitude() - mCurrentLocation.latitude) < .001)
@@ -114,8 +131,6 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
         createLocationRequest();
         startLocationUpdates();
     }
-
-
     /**
      * Create request to update location.
      */

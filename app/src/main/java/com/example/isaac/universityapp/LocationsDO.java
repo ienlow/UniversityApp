@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@DynamoDBTable(tableName = "timedealz-mobilehub-1622888887-Locations")
+@DynamoDBTable(tableName = "timedealz-mobilehub-230795270-Locations")
 
 public class LocationsDO {
     private String _userId;

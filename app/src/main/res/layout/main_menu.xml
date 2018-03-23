@@ -11,8 +11,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="150dp"
         android:onClick="mapsStart"
-        android:text="Button"
+        android:text="Get Points"
 
-        tools:text="Maps" />
+        tools:text="Get Points" />
 
 </LinearLayout>

@@ -16,8 +16,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 
 
 public class LoginScreen extends AppCompatActivity {
-    private DynamoDBMapper dynamoDBMapper;
-    private Thread thread;
+    private int i;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,11 +24,20 @@ public class LoginScreen extends AppCompatActivity {
         setContentView(R.layout.login_screen);
         ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_FINE_LOCATION}, 123);
         ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_COARSE_LOCATION}, 123);
-
+        if (savedInstanceState != null)
+            i = savedInstanceState.getInt("Counter");
     }
 
     public void mainMenu(View view) {
         Intent intent = new Intent(this, MainMenu.class);
         startActivity(intent);
+        finish();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putInt("Counter", i);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 }

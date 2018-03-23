@@ -56,25 +56,37 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
     private LatLng lebanon = new LatLng(36.896034, -82.068117);
     private CircleOptions one;
     private LocationRequest mLocationRequest = new LocationRequest();
-    private boolean mRequestingLocationUpdates = false;
+    private boolean mRequestingLocationUpdates;
     private FusedLocationProviderClient mFusedLocationClient;
     private DynamoDBMapper dynamoDBMapper;
     private LocationsDO locationItem;
+    private int i, j;
+    private String tracking;
+    Intent intent;
+    private Bundle b;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent intent = getIntent();
+        intent = new Intent(getApplicationContext(), MainMenu.class);
+//        savedInstanceState.putBoolean(tracking, mRequestingLocationUpdates);
+        b = this.getIntent().getExtras();
+        if (b != null)
+            j = b.getInt("Counter");
+
         setContentView(R.layout.timer_layout);
         AWSMobileClient.getInstance().initialize(this).execute();
 
         Button button = (Button) findViewById(R.id.button4);
         button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                startTracking();
-            }
-        });
+                @Override
+                public void onClick(View view) {
+                    if (j == 0) {
+                        startTracking();
+                        j = 1;
+                    }
+                }
+            });
 
         // Instantiate a AmazonDynamoDBMapperClient
         final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());
@@ -108,7 +120,12 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
                 // Log.d("News Item:", newsItem.toString());
             }
         }).start();
+        //Toast.makeText(getApplicationContext(), "Create", Toast.LENGTH_SHORT).show();
+//        savedInstanceState.putBoolean("tracking", mRequestingLocationUpdates);
+    }
 
+    public void startTracking () {
+        createLocationRequest();
         mLocationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -120,15 +137,12 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
                             && ((locationItem.getLongitude() - mCurrentLocation.longitude) > -.001)
                             && ((locationItem.getLatitude() - mCurrentLocation.latitude) < .001)
                             && ((locationItem.getLatitude() - mCurrentLocation.latitude) > -.001)) {
-                        Toast.makeText(getApplicationContext(), "Success", Toast.LENGTH_SHORT).show();
+                        i++;
+                        Toast.makeText(getApplicationContext(), String.valueOf(i), Toast.LENGTH_SHORT).show();
                     }
                 }
             };
         };
-    }
-
-    public void startTracking () {
-        createLocationRequest();
         startLocationUpdates();
     }
     /**
@@ -147,13 +161,15 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
         mRequestingLocationUpdates = true;
     }
 
-    @Override
+    /*@Override
     protected void onResume() {
         super.onResume();
-        /*if (mRequestingLocationUpdates) {
+        if (mRequestingLocationUpdates) {
             startLocationUpdates();
-        }*/
-    }
+        }
+        //Toast.makeText(getApplicationContext(), "Resume", Toast.LENGTH_SHORT).show();
+
+    }*/
 
     private void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -164,10 +180,20 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
                 null /* Looper */);
     }
 
+    private void stopLocationUpdates() {
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
         //stopLocationUpdates();
+        intent = new Intent(this, MainMenu.class);
+        b = new Bundle();
+        b.putInt("Counter", j);
+        intent.putExtras(b);
+        startActivity(intent);
+        Toast.makeText(getApplicationContext(), String.valueOf(j), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -175,16 +201,17 @@ public class Timer extends AppCompatActivity implements GoogleApiClient.OnConnec
 
     }
 
-    @Override
+    /*@Override
     public void onStart() {
         super.onStart();
         mGoogleApiClient.connect();
-    }
+    }*/
 
     @Override
     public void onStop() {
         super.onStop();
-        mGoogleApiClient.disconnect();
+        //mGoogleApiClient.disconnect();
         Log.i("Stop", "connection");
+
     }
 }

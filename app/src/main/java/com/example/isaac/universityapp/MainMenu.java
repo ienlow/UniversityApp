@@ -14,38 +14,28 @@ import com.example.isaac.universityapp.R;
  */
 
 public class MainMenu extends AppCompatActivity {
-    Bundle b;
     Intent intent;
-    int i;
+    private int i;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_menu);
-        intent = getIntent();
-        i = intent.getIntExtra("Counter", i);
     }
 
     public void mapsStart(View view) {
         intent = new Intent(this, Timer.class);
-        intent.putExtra("Counter", i);
         startActivity(intent);
-        finish();
+        if (i == 0) {
+            intent = new Intent(this, Tracker.class);
+            startService(intent);
+        }
+        i++;
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        Toast.makeText(this, String.valueOf(i), Toast.LENGTH_SHORT).show();
-        //Toast.makeText(this, "Stop", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        //Intent intent = getIntent();
-        i = intent.getIntExtra("Counter", i);
-        //Toast.makeText(this, "Resume", Toast.LENGTH_SHORT).show();
+    public void onDestroy() {
+        super.onDestroy();
+        intent = new Intent(this, Tracker.class);
+        stopService(intent);
     }
 }

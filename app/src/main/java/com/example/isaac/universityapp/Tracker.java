@@ -109,7 +109,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
 
         // Sleep for 2 seconds to allow db to connect
         while (!finished)
-        SystemClock.sleep(1000);
+        //SystemClock.sleep(1000);
 
         startTracking();
     }

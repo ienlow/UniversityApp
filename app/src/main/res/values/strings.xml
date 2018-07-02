@@ -2,4 +2,6 @@
     <string name="app_name">University App</string>
     <string name="title_activity_maps">Map</string>
     <string name="im_here">Im here!</string>
+    <string name="preference_file"></string>
+    <string name="Username"></string>
 </resources>

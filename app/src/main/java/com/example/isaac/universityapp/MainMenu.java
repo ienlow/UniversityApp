@@ -6,6 +6,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import com.amazonaws.mobile.client.AWSMobileClient;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.example.isaac.universityapp.MapsActivity;
 import com.example.isaac.universityapp.R;
 
@@ -16,26 +21,32 @@ import com.example.isaac.universityapp.R;
 public class MainMenu extends AppCompatActivity {
     Intent intent;
     private int i;
+    private DynamoDBMapper dynamoDBMapper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_menu);
+
+        AWSMobileClient.getInstance().initialize(this).execute();
+
+        // Instantiate a AmazonDynamoDBMapperClient
+        final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());
+        dynamoDBClient.setRegion(Region.getRegion(Regions.US_EAST_1));
+        dynamoDBMapper = DynamoDBMapper.builder()
+                .dynamoDBClient(dynamoDBClient)
+                .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
+                .build();
     }
 
     public void mapsStart(View view) {
         intent = new Intent(this, Timer.class);
         startActivity(intent);
-        if (i == 0) {
-            intent = new Intent(this, Tracker.class);
-            startService(intent);
-        }
-        i++;
     }
 
     public void onDestroy() {
         super.onDestroy();
-        intent = new Intent(this, Tracker.class);
+        Intent intent = new Intent(this, Tracker.class);
         stopService(intent);
     }
 }

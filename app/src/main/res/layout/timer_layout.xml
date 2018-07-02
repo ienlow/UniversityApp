@@ -5,10 +5,27 @@
     android:layout_height="match_parent">
 
     <Button
-        android:id="@+id/button4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start"/>
+
+    <TextView
+        android:id="@+id/timer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="100dp"
+        android:textAlignment="textStart"
+        android:textSize="80dp"
+        tools:layout_marginTop="200dp"
+        tools:text="10:00" />
+
+    <ProgressBar
+        android:id="@+id/progressBar2"
+        style="?android:attr/progressBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:contextClickable="false"
-        android:text="@string/im_here"
-        android:visibility="visible" />
+        android:indeterminate="true"
+        android:max="5"
+        android:progress="1" />
+
 </LinearLayout>

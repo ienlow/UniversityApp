@@ -42,6 +42,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
     private CircleOptions one;
     private LocationRequest mLocationRequest = new LocationRequest();
     private boolean mRequestingLocationUpdates;
+    private boolean finished = false;
     private FusedLocationProviderClient mFusedLocationClient;
     private DynamoDBMapper dynamoDBMapper;
     private LocationsDO locationItem;
@@ -62,8 +63,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
                 .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
                 .build();
 
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        locationItem = new LocationsDO();
+
 
         new Thread(new Runnable() {
             @Override
@@ -76,6 +76,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
 
                 // Item read
                 // Log.d("News Item:", newsItem.toString());
+                finished = true;
             }
         }).start();
 
@@ -86,19 +87,30 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
                     // Update UI with location data
                     // ...
                     LatLng mCurrentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                    if (((locationItem.getLongitude() - mCurrentLocation.longitude) < .001)
-                            && ((locationItem.getLongitude() - mCurrentLocation.longitude) > -.001)
-                            && ((locationItem.getLatitude() - mCurrentLocation.latitude) < .001)
-                            && ((locationItem.getLatitude() - mCurrentLocation.latitude) > -.001)) {
-                        i++;
-                        Toast.makeText(getApplicationContext(), String.valueOf(i), Toast.LENGTH_SHORT).show();
+                    try {
+                        if (((locationItem.getLongitude() - mCurrentLocation.longitude) < .001)
+                                && ((locationItem.getLongitude() - mCurrentLocation.longitude) > -.001)
+                                && ((locationItem.getLatitude() - mCurrentLocation.latitude) < .001)
+                                && ((locationItem.getLatitude() - mCurrentLocation.latitude) > -.001)) {
+                            i++;
+                            Toast.makeText(getApplicationContext(), String.valueOf(i), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    catch (Exception E){
+                        Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
+                        stopSelf();
                     }
                 }
             };
         };
 
-        // Sleep for 1 second to allow db to connect
-        SystemClock.sleep(2000);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        locationItem = new LocationsDO();
+
+        // Sleep for 2 seconds to allow db to connect
+        while (!finished)
+        SystemClock.sleep(1000);
+
         startTracking();
     }
 

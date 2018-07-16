@@ -1,7 +1,10 @@
 package com.example.isaac.universityapp;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -10,6 +13,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Button;
@@ -47,11 +51,22 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
     private DynamoDBMapper dynamoDBMapper;
     private LocationsDO locationItem;
     private int i;
-    private String tracking;
+    private BroadcastReceiver br;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Check Status"));
+
+        br = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+               if (intent.getAction().equals("Check Status")) {
+                   intent = new Intent("Started");
+                   LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
+               }
+            }
+        };
 
         AWSMobileClient.getInstance().initialize(this).execute();
 
@@ -93,12 +108,17 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
                                 && ((locationItem.getLatitude() - mCurrentLocation.latitude) < .001)
                                 && ((locationItem.getLatitude() - mCurrentLocation.latitude) > -.001)) {
                             i++;
+                            Intent intentTwo = new Intent("Success");
+                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intentTwo);
                             Toast.makeText(getApplicationContext(), String.valueOf(i), Toast.LENGTH_SHORT).show();
+                        }
+                        else {
+                            //Intent intent = new Intent("Fail");
+                            //LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
                         }
                     }
                     catch (Exception E){
                         Toast.makeText(getApplicationContext(), "Error", Toast.LENGTH_SHORT).show();
-                        stopSelf();
                     }
                 }
             };
@@ -108,7 +128,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
         locationItem = new LocationsDO();
 
         // Sleep for 2 seconds to allow db to connect
-        while (!finished)
+        //while (!finished)
         //SystemClock.sleep(1000);
 
         startTracking();
@@ -161,6 +181,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
     public void onDestroy() {
         super.onDestroy();
         stopLocationUpdates();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(br);
         Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
     }
 

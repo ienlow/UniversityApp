@@ -2,8 +2,10 @@ package com.example.isaac.universityapp;
 
 import android.*;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -11,6 +13,7 @@ import android.os.CountDownTimer;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.ServiceState;
 import android.util.Log;
@@ -61,9 +64,12 @@ import java.util.Set;
 public class Timer extends AppCompatActivity {
     private int i;
     private CountDownTimer timer;
-    private long timeLeftInMilliseconds = 1000;//10 mins
+    private long timeLeftInMilliseconds = 600000;//10 mins
     private TextView timerText;
     private ProgressBar progress;
+    private BroadcastReceiver br;
+    boolean started = false;
+    boolean successful = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -74,14 +80,29 @@ public class Timer extends AppCompatActivity {
         timerText = findViewById(R.id.timer);
         progress = findViewById(R.id.progressBar2);
         progress.setVisibility(View.VISIBLE);
-        timerText.setVisibility(View.INVISIBLE);
 
-        if (i == 0) {
-            Intent intent = new Intent(this, Tracker.class);
-            startService(intent);
-            startTimer();
-        }
-        i++;
+        Intent intent = new Intent(this, Tracker.class);
+        Intent intentTwo = new Intent("Check Status");
+        LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentTwo);
+            br = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (intent.getAction().equals("Started")) {
+                        started = true;
+                    }
+                    if (intent.getAction().equals("Success") && started) {
+                        successful = true;
+                        progress.setVisibility(View.INVISIBLE);
+                        startTimer();
+                    }
+                }
+            };
+        startService(intent);
+    }
+
+    public void checkService() {
+        Intent intent = new Intent("Status");
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
     }
 
     public void startTimer() {
@@ -100,11 +121,24 @@ public class Timer extends AppCompatActivity {
     }
 
     public void updateTimer() {
-        int seconds = (int) (timeLeftInMilliseconds / 60000);
-        int minutes = (int) (timeLeftInMilliseconds % 60000);
+        int seconds = (int) (timeLeftInMilliseconds / 1000);
+        int minutes = (int) (seconds / 60);
+        seconds = seconds % 60;
 
         String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
 
         timerText.setText(timeLeftFormatted);
+    }
+
+    protected void onResume(){
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Started"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Success"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Fail"));
+    }
+
+    protected void onPause (){
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(br);
     }
 }

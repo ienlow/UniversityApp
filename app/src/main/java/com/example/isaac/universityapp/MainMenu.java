@@ -1,9 +1,12 @@
 package com.example.isaac.universityapp;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.amazonaws.mobile.client.AWSMobileClient;
@@ -22,6 +25,7 @@ public class MainMenu extends AppCompatActivity {
     Intent intent;
     private int i;
     private DynamoDBMapper dynamoDBMapper;
+    private Button button6;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +33,8 @@ public class MainMenu extends AppCompatActivity {
         setContentView(R.layout.main_menu);
 
         AWSMobileClient.getInstance().initialize(this).execute();
+        button6 = findViewById(R.id.button6);
+        button6.setText("vs. Georgia Southern \n @ Dedmon Center");
 
         // Instantiate a AmazonDynamoDBMapperClient
         final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());

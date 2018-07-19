@@ -51,10 +51,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (savedInstanceState != null)
-            Toast.makeText(this, "saved", Toast.LENGTH_SHORT).show();
-        else
             i = 0;
         Intent intent = getIntent();
         setContentView(R.layout.activity_maps);
@@ -93,13 +89,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             };
         };
     }
-
-    // Restore instance state
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        i = savedInstanceState.getInt(mMapState);
-    }
-
 
     /**
      * Manipulates the map once available.

@@ -44,7 +44,7 @@ public class LoginScreen extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_COARSE_LOCATION}, 123);
 
         if (sharedPreferences != null) {
-            //login.setText(sharedPreferences.getString(getString(R.string.Username), ""));
+            //login.setText(sharedPreferences.getString("",""));
         }
     }
 

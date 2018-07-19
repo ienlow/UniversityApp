@@ -62,72 +62,76 @@ import java.util.Set;
 
 
 public class Timer extends AppCompatActivity {
-    private int i;
     private CountDownTimer timer;
     private long timeLeftInMilliseconds = 600000;//10 mins
     private TextView timerText;
     private ProgressBar progress;
     private BroadcastReceiver br;
-    boolean started = false;
-    boolean successful = false;
+    boolean timerPaused = false;
+    private int seconds;
+    private int minutes;
+    //Radford long = -80.5764477 lat = 37.1318
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Intent intent = new Intent(this, Tracker.class);
+        startService(intent);
         setContentView(R.layout.timer_layout);
 
         timerText = findViewById(R.id.timer);
         progress = findViewById(R.id.progressBar2);
         progress.setVisibility(View.VISIBLE);
 
-        Intent intent = new Intent(this, Tracker.class);
-        Intent intentTwo = new Intent("Check Status");
-        LocalBroadcastManager.getInstance(this).sendBroadcastSync(intentTwo);
             br = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
-                    if (intent.getAction().equals("Started")) {
-                        started = true;
-                    }
-                    if (intent.getAction().equals("Success") && started) {
-                        successful = true;
+                    if (intent.getAction().equals("Success")) {
                         progress.setVisibility(View.INVISIBLE);
                         startTimer();
+                        timerPaused = false;
+                    }
+                    else if (intent.getAction().equals("Fail")) {
+                        progress.setVisibility(View.INVISIBLE);
+                        timer.cancel();
+                        timerPaused = true;
                     }
                 }
             };
-        startService(intent);
-    }
-
-    public void checkService() {
-        Intent intent = new Intent("Status");
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
     }
 
     public void startTimer() {
-        timer = new CountDownTimer(timeLeftInMilliseconds, 1000) {
-            @Override
-            public void onTick(long l) {
-                timeLeftInMilliseconds = l;
-                updateTimer();
-            }
+            timer = new CountDownTimer(timeLeftInMilliseconds, 1000) {
+                @Override
+                public void onTick(long l) {
+                    if (!timerPaused) {
+                        timeLeftInMilliseconds = l;
+                        updateTimer();
+                    }
+                }
 
-            @Override
-            public void onFinish() {
+                @Override
+                public void onFinish() {
 
-            }
-        }.start();
+                }
+            }.start();
+    }
+
+    public void pauseTimer() {
+
     }
 
     public void updateTimer() {
-        int seconds = (int) (timeLeftInMilliseconds / 1000);
-        int minutes = (int) (seconds / 60);
-        seconds = seconds % 60;
+        if (!timerPaused) {
+            seconds = (int) (timeLeftInMilliseconds / 1000);
+            minutes = (int) (seconds / 60);
+            seconds = seconds % 60;
 
-        String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
+            String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
 
-        timerText.setText(timeLeftFormatted);
+            timerText.setText(timeLeftFormatted);
+        }
     }
 
     protected void onResume(){

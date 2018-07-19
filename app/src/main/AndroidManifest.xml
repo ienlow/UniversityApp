@@ -45,6 +45,12 @@
         </activity>
 
         <activity
+            android:name=".MapsActivity"
+            android:label="Maps">
+        </activity>
+
+
+        <activity
             android:name=".MainMenu"
             android:label="MainMenu">
         </activity>

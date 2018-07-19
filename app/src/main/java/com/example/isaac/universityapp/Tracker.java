@@ -64,6 +64,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
                if (intent.getAction().equals("Check Status")) {
                    intent = new Intent("Started");
                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
+                   Toast.makeText(getApplicationContext(), "Started", Toast.LENGTH_SHORT).show();
                }
             }
         };
@@ -113,8 +114,8 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
                             Toast.makeText(getApplicationContext(), String.valueOf(i), Toast.LENGTH_SHORT).show();
                         }
                         else {
-                            //Intent intent = new Intent("Fail");
-                            //LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
+                            Intent intent = new Intent("Fail");
+                            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
                         }
                     }
                     catch (Exception E){
@@ -126,11 +127,6 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         locationItem = new LocationsDO();
-
-        // Sleep for 2 seconds to allow db to connect
-        //while (!finished)
-        //SystemClock.sleep(1000);
-
         startTracking();
     }
 
@@ -147,8 +143,8 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
      * Create request to update location.
      */
     protected void createLocationRequest() {
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setInterval(2000);
+        mLocationRequest.setFastestInterval(2000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()

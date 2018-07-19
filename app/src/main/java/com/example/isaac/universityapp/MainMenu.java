@@ -46,13 +46,13 @@ public class MainMenu extends AppCompatActivity {
     }
 
     public void mapsStart(View view) {
-        intent = new Intent(this, Timer.class);
+        intent = new Intent(this, MapsActivity.class);
         startActivity(intent);
     }
 
     public void onDestroy() {
         super.onDestroy();
-        Intent intent = new Intent(this, Tracker.class);
-        stopService(intent);
+        //Intent intent = new Intent(this, Tracker.class);
+       // stopService(intent);
     }
 }

@@ -69,7 +69,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
             }
         };
 
-        AWSMobileClient.getInstance().initialize(this).execute();
+        //AWSMobileClient.getInstance().initialize(this).execute();
 
         // Instantiate a AmazonDynamoDBMapperClient
         final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());

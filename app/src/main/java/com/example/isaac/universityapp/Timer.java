@@ -70,6 +70,7 @@ public class Timer extends AppCompatActivity {
     boolean timerPaused = false;
     private int seconds;
     private int minutes;
+    private long timeHolder = 0;
     //Radford long = -80.5764477 lat = 37.1318
 
     @Override
@@ -94,8 +95,9 @@ public class Timer extends AppCompatActivity {
                     }
                     else if (intent.getAction().equals("Fail")) {
                         progress.setVisibility(View.INVISIBLE);
-                        timer.cancel();
                         timerPaused = true;
+                        pauseTimer();
+                        timer.cancel();
                     }
                 }
             };
@@ -105,10 +107,10 @@ public class Timer extends AppCompatActivity {
             timer = new CountDownTimer(timeLeftInMilliseconds, 1000) {
                 @Override
                 public void onTick(long l) {
-                    if (!timerPaused) {
-                        timeLeftInMilliseconds = l;
-                        updateTimer();
-                    }
+                    timeLeftInMilliseconds = l;
+                    updateTimer();
+                    if (!timerPaused)
+                        timeHolder = l; // Update the time holder to the current time left
                 }
 
                 @Override
@@ -119,7 +121,7 @@ public class Timer extends AppCompatActivity {
     }
 
     public void pauseTimer() {
-
+        timeLeftInMilliseconds = timeHolder; // Update time left to time holder if timer paused
     }
 
     public void updateTimer() {

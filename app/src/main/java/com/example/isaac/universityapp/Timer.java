@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.SystemClock;
@@ -35,6 +36,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.amazonaws.services.s3.model.transform.Unmarshallers;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -71,6 +73,8 @@ public class Timer extends AppCompatActivity {
     private int seconds;
     private int minutes;
     private long timeHolder = 0;
+    private Tag tag;
+    private Object lock;
     //Radford long = -80.5764477 lat = 37.1318
 
     @Override
@@ -80,6 +84,7 @@ public class Timer extends AppCompatActivity {
         Intent intent = new Intent(this, Tracker.class);
         startService(intent);
         setContentView(R.layout.timer_layout);
+        lock = new Object();
 
         timerText = findViewById(R.id.timer);
         progress = findViewById(R.id.progressBar2);
@@ -95,9 +100,17 @@ public class Timer extends AppCompatActivity {
                     }
                     else if (intent.getAction().equals("Fail")) {
                         progress.setVisibility(View.INVISIBLE);
-                        timerPaused = true;
                         pauseTimer();
-                        timer.cancel();
+                        timerPaused = true;
+                        Log.d("fail", "fail");
+                        if (timerPaused) {
+                            synchronized (lock) {
+                                try {
+                                    timer.wait();
+                                } catch (InterruptedException e) {
+                                }
+                            }
+                        }
                     }
                 }
             };
@@ -109,8 +122,11 @@ public class Timer extends AppCompatActivity {
                 public void onTick(long l) {
                     timeLeftInMilliseconds = l;
                     updateTimer();
-                    if (!timerPaused)
-                        timeHolder = l; // Update the time holder to the current time left
+                    timeHolder = l; // Update the time holder to the current time left
+                    Log.d("tag", String.valueOf(timeHolder));
+                    synchronized (lock) {
+                        lock.notifyAll();
+                    }
                 }
 
                 @Override
@@ -122,10 +138,11 @@ public class Timer extends AppCompatActivity {
 
     public void pauseTimer() {
         timeLeftInMilliseconds = timeHolder; // Update time left to time holder if timer paused
+        timer.cancel();
     }
 
     public void updateTimer() {
-        if (!timerPaused) {
+        //if (!timerPaused) {
             seconds = (int) (timeLeftInMilliseconds / 1000);
             minutes = (int) (seconds / 60);
             seconds = seconds % 60;
@@ -133,7 +150,7 @@ public class Timer extends AppCompatActivity {
             String timeLeftFormatted = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds);
 
             timerText.setText(timeLeftFormatted);
-        }
+        //}
     }
 
     protected void onResume(){

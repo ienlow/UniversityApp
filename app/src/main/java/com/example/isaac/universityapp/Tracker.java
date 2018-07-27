@@ -51,23 +51,12 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
     private DynamoDBMapper dynamoDBMapper;
     private LocationsDO locationItem;
     private int i;
+    private long time;
     private BroadcastReceiver br;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Check Status"));
-
-        br = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-               if (intent.getAction().equals("Check Status")) {
-                   intent = new Intent("Started");
-                   LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
-                   Toast.makeText(getApplicationContext(), "Started", Toast.LENGTH_SHORT).show();
-               }
-            }
-        };
 
         //AWSMobileClient.getInstance().initialize(this).execute();
 
@@ -79,7 +68,8 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
                 .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
                 .build();
 
-
+        Long g = new Intent(this, MainMenu.class).getLongExtra("Time", 0);
+        Log.d("Time", String.valueOf(g));
 
         new Thread(new Runnable() {
             @Override

@@ -28,12 +28,14 @@ import com.example.isaac.universityapp.R;
 
 import java.util.Locale;
 
+import static java.security.AccessController.getContext;
+
 /**
  * Created by isaac on 2/24/2018.
  */
 
 public class MainMenu extends AppCompatActivity {
-    Intent intent;
+    private Intent intent;
     private int i;
     private DynamoDBMapper dynamoDBMapper;
     private Button button6;
@@ -42,19 +44,18 @@ public class MainMenu extends AppCompatActivity {
     private TextView timerText;
     private ProgressBar progress;
     private BroadcastReceiver br;
-    boolean timerPaused = false;
-    boolean timerStarted = false;
+    boolean timerPaused = false, timerStarted = false;
     private int seconds, minutes, hours;
-    private long timeHolder = 0;
-    private Tag tag;
-    private Object lock;
     private Handler handler;
+    private static final int RSS_JOB_ID = 1000;
     //Radford long = -80.5764477 lat = 37.1318
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_menu);
+        intent = new Intent(this, TimerBackground.class);
+        stopService(intent);
 
         AWSMobileClient.getInstance().initialize(this).execute();
         button6 = findViewById(R.id.button6);
@@ -70,7 +71,6 @@ public class MainMenu extends AppCompatActivity {
 
         Intent intent = new Intent(this, Tracker.class);
         startService(intent);
-        lock = new Object();
 
         timerText = findViewById(R.id.timer);
         handler = new Handler();
@@ -103,6 +103,10 @@ public class MainMenu extends AppCompatActivity {
                     // progress.setVisibility(View.INVISIBLE);
                     Log.d("fail", "fail");
                 }
+                else if (intent.getAction().equals("time")) {
+                    Bundle extras = getIntent().getExtras();
+                    Log.d("time", String.valueOf(extras.getLong("time")));
+                }
             }
         };
     }
@@ -124,15 +128,15 @@ public class MainMenu extends AppCompatActivity {
                 timerText.setText(timeLeftFormatted);
                 handler.post(this);
             }
-            Log.d("tag", String.valueOf(timeLeftInMilliseconds));
+            //Log.d("tag", String.valueOf(timeLeftInMilliseconds));
         }
     };
 
     protected void onResume(){
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Started"));
         LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Success"));
         LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Fail"));
+        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("time"));
     }
 
     protected void onPause () {
@@ -145,9 +149,9 @@ public class MainMenu extends AppCompatActivity {
         startActivity(intent);
     }
 
+    @Override
     public void onDestroy() {
         super.onDestroy();
-        Intent intent = new Intent(this, Tracker.class);
-        stopService(intent);
+        Log.d("Destroy", String.valueOf(timeLeftInMilliseconds));
     }
 }

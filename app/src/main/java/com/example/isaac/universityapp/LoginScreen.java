@@ -59,4 +59,8 @@ public class LoginScreen extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
+    public void onDestroy() {
+        super.onDestroy();
+    }
 }

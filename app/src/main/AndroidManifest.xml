@@ -55,6 +55,12 @@
             android:name=".Tracker"
             android:label="Tracker">
         </service>
+
+        <service
+            android:name=".TimerBackground"
+            android:label="BackgroundTimer">
+        </service>
+
     </application>
 
 </manifest>

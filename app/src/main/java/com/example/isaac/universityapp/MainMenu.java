@@ -49,13 +49,12 @@ public class MainMenu extends AppCompatActivity {
     private Handler handler;
     private static final int RSS_JOB_ID = 1000;
     //Radford long = -80.5764477 lat = 37.1318
+    //Sterling long = -77.405630 lat = 39.040899
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_menu);
-        intent = new Intent(this, TimerBackground.class);
-        stopService(intent);
 
         AWSMobileClient.getInstance().initialize(this).execute();
         button6 = findViewById(R.id.button6);
@@ -95,8 +94,7 @@ public class MainMenu extends AppCompatActivity {
                 }
                 else if (intent.getAction().equals("Fail")) {
                     if (i == 0) {
-                        handler.removeCallbacks(updateTimer);
-                        timeSwapBuff += timeLeftInMilliseconds;
+                        timerText.setText("00:00:00");
                         timerPaused = true;
                     }
                     i++;

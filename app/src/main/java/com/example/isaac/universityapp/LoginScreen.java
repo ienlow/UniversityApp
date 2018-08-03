@@ -2,6 +2,7 @@ package com.example.isaac.universityapp;
 
 import com.amazonaws.mobile.client.AWSMobileClient;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -42,6 +43,7 @@ public class LoginScreen extends AppCompatActivity {
         editSharedPreferences = sharedPreferences.edit();
         ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_FINE_LOCATION}, 123);
         ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_COARSE_LOCATION}, 123);
+        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.INTERNET}, 123);
 
         if (sharedPreferences != null) {
             //login.setText(sharedPreferences.getString("",""));

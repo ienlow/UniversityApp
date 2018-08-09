@@ -3,6 +3,8 @@ package com.example.isaac.universityapp;
 import com.amazonaws.mobile.client.AWSMobileClient;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,6 +18,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 
 import java.util.Map;
@@ -30,38 +34,49 @@ import java.util.Set;
 public class LoginScreen extends AppCompatActivity {
 
     Context context;
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor editSharedPreferences;
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor editor;
     private EditText login;
+    private DynamoDBMapper dynamoDBMapper;
+    public static final String MY_PREFS = "MyPrefs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_screen);
-        context = getApplicationContext();
-        sharedPreferences = context.getSharedPreferences(getString(R.string.preference_file), Context.MODE_PRIVATE);
-        editSharedPreferences = sharedPreferences.edit();
+        prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+        editor = prefs.edit();
         ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_FINE_LOCATION}, 123);
         ActivityCompat.requestPermissions(this, new String[] {android.Manifest.permission.ACCESS_COARSE_LOCATION}, 123);
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.INTERNET}, 123);
-
-        if (sharedPreferences != null) {
-            //login.setText(sharedPreferences.getString("",""));
-        }
     }
 
     /*
     Create Main Menu intent and save login info
      */
+    @SuppressLint("NewApi")
     public void mainMenu(View view) {
         login = findViewById(R.id.editText);
-        editSharedPreferences.putString(getString(R.string.Username), login.getText().toString());
-        editSharedPreferences.apply();
         Intent intent = new Intent(this, MainMenu.class);
         startActivity(intent);
+
+        AWSMobileClient.getInstance().initialize(this).execute();
+        // Instantiate a AmazonDynamoDBMapperClient
+        final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());
+        dynamoDBClient.setRegion(Region.getRegion(Regions.US_EAST_1));
+        dynamoDBMapper = DynamoDBMapper.builder()
+                .dynamoDBClient(dynamoDBClient)
+                .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
+                .build();
         finish();
+
+        if (!prefs.getBoolean("tracking", false)) {
+            intent = new Intent(this, Tracker.class);
+            startForegroundService(intent);
+        }
     }
 
+    @Override
     public void onDestroy() {
         super.onDestroy();
     }

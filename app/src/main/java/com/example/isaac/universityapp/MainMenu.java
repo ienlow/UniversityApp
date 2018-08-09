@@ -4,11 +4,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.nfc.Tag;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.support.annotation.RequiresApi;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -36,9 +39,9 @@ import static java.security.AccessController.getContext;
 
 public class MainMenu extends AppCompatActivity {
     private Intent intent;
-    private int i;
+    private int i, points = 0;
     private DynamoDBMapper dynamoDBMapper;
-    private Button button6;
+    private Button button6, trackingButton;
     private CountDownTimer timer;
     private long timeLeftInMilliseconds = 0, startTime = 0, timeSwapBuff = 0, updateTime = 0;//10 mins
     private TextView timerText;
@@ -47,7 +50,9 @@ public class MainMenu extends AppCompatActivity {
     boolean timerPaused = false, timerStarted = false;
     private int seconds, minutes, hours;
     private Handler handler;
-    private static final int RSS_JOB_ID = 1000;
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor editor;
+    public static final String MY_PREFS = "MyPrefs";
     //Radford long = -80.5764477 lat = 37.1318
     //Sterling long = -77.405630 lat = 39.040899
 
@@ -55,21 +60,35 @@ public class MainMenu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_menu);
+        prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+        editor = prefs.edit();
 
-        AWSMobileClient.getInstance().initialize(this).execute();
+
         button6 = findViewById(R.id.button6);
         button6.setText("vs. Georgia Southern \n @ Dedmon Center");
+        trackingButton = findViewById(R.id.tracking);
+        trackingButton.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), Tracker.class);
+                if (prefs.getBoolean("enabled", false) && prefs.getBoolean("tracking", false)) {
+                    editor.putBoolean("enabled", false);
+                    editor.putBoolean("tracking", false);
+                    editor.apply();
+                    stopService(intent);
+                    trackingButton.setText("Enable Tracking");
+                }
+                else {
+                    editor.putBoolean("enabled", true);
+                    editor.putBoolean("tracking", true);
+                    editor.apply();
+                    startForegroundService(intent);
+                    trackingButton.setText("Disable Tracking");
+                }
+            }
+        });
 
-        // Instantiate a AmazonDynamoDBMapperClient
-        final AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());
-        dynamoDBClient.setRegion(Region.getRegion(Regions.US_EAST_1));
-        dynamoDBMapper = DynamoDBMapper.builder()
-                .dynamoDBClient(dynamoDBClient)
-                .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
-                .build();
-
-        Intent intent = new Intent(this, Tracker.class);
-        startService(intent);
 
         timerText = findViewById(R.id.timer);
         handler = new Handler();
@@ -130,6 +149,11 @@ public class MainMenu extends AppCompatActivity {
         }
     };
 
+    public void openProfile(View view) {
+        intent = new Intent(this, Profile.class);
+        startActivity(intent);
+    }
+
     protected void onResume(){
         super.onResume();
         LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("Success"));
@@ -145,6 +169,19 @@ public class MainMenu extends AppCompatActivity {
     public void mapsStart(View view) {
         intent = new Intent(this, Timer.class);
         startActivity(intent);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void editTracking(View view) {
+        Intent intent = new Intent(this, Tracker.class);
+        if (!prefs.getBoolean("tracking", false)) {
+            stopService(intent);
+            editor.putBoolean("tracking", false);
+        }
+        else {
+            startForegroundService(intent);
+            editor.putBoolean("tracking", true);
+        }
     }
 
     @Override

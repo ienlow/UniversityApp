@@ -51,6 +51,11 @@
             android:label="MainMenu">
         </activity>
 
+        <activity
+            android:name=".Profile"
+            android:label="Profile">
+        </activity>
+
         <service
             android:name=".Tracker"
             android:label="Tracker">

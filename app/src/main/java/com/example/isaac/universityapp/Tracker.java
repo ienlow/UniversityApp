@@ -1,13 +1,16 @@
 package com.example.isaac.universityapp;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -39,6 +42,10 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 
+import java.util.Locale;
+
+import static com.example.isaac.universityapp.Profile.MY_PREFS;
+
 public class Tracker extends Service implements GoogleApiClient.OnConnectionFailedListener {
     private GoogleApiClient mGoogleApiClient;
     private LocationCallback mLocationCallback;
@@ -50,13 +57,30 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
     private FusedLocationProviderClient mFusedLocationClient;
     private DynamoDBMapper dynamoDBMapper;
     private LocationsDO locationItem;
-    private int i;
+    private int i, j, points = 0;
     private long time;
     private BroadcastReceiver br;
+    private long timeLeftInMilliseconds = 0, startTime = 0, timeSwapBuff = 0, updateTime = 0;//10 mins
+    boolean timerPaused = false, timerStarted = false;
+    private int seconds, minutes, hours;
+    private Handler handler;
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor editor;
+    private Notification notification;
+    public static final String MY_PREFS = "MyPrefs";
 
     @Override
     public void onCreate() {
         super.onCreate();
+        prefs = getSharedPreferences(MY_PREFS, MODE_PRIVATE);
+        editor = prefs.edit();
+        handler = new Handler();
+        notification = new Notification();
+        startForeground(1, notification);
+        if (prefs != null) {
+            editor.putBoolean("Tracking", true);
+            editor.apply();
+        }
 
         //AWSMobileClient.getInstance().initialize(this).execute();
 
@@ -86,6 +110,7 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
             }
         }).start();
 
+
         mLocationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(LocationResult locationResult) {
@@ -98,14 +123,28 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
                                 && ((locationItem.getLongitude() - mCurrentLocation.longitude) > -.001)
                                 && ((locationItem.getLatitude() - mCurrentLocation.latitude) < .001)
                                 && ((locationItem.getLatitude() - mCurrentLocation.latitude) > -.001)) {
-                            i++;
+                            j++;
                             Intent intentTwo = new Intent("Success");
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intentTwo);
-                            Toast.makeText(getApplicationContext(), String.valueOf(i), Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getApplicationContext(), String.valueOf(j), Toast.LENGTH_SHORT).show();
+                            i = 0;
+                            if (!timerStarted) {
+                                startTime = SystemClock.uptimeMillis();
+                                handler.post(updateTimer);
+                            }
+                            if (timerPaused) {
+                                startTime = SystemClock.uptimeMillis();
+                                handler.post(updateTimer);
+                                timerPaused = false;
+                            }
                         }
                         else {
                             Intent intent = new Intent("Fail");
                             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
+                            if (i == 0) {
+                                timerPaused = true;
+                            }
+                            i++;
                         }
                     }
                     catch (Exception E){
@@ -118,11 +157,6 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         locationItem = new LocationsDO();
         startTracking();
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
     }
 
     public void startTracking () {
@@ -158,6 +192,32 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
     }
 
+    Runnable updateTimer = new Runnable() {
+        @Override
+        public void run() {
+            timerStarted = true;
+            if (!timerPaused) {
+                timeLeftInMilliseconds = SystemClock.uptimeMillis() - startTime;
+                updateTime = timeSwapBuff + timeLeftInMilliseconds;
+                seconds = (int) (updateTime / 1000);
+                minutes = (int) (seconds / 60);
+                hours = minutes / 60;
+                seconds = seconds % 60;
+
+                handler.post(this);
+                Log.d("Time", String.valueOf(seconds));
+            }
+            else {
+                editor = getSharedPreferences(MY_PREFS, MODE_PRIVATE).edit();
+                if (prefs != null)
+                    points = prefs.getInt("points", 0);
+                editor.putInt("points", seconds + points);
+                editor.apply();
+            }
+            //Log.d("tag", String.valueOf(timeLeftInMilliseconds));
+        }
+    };
+
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
@@ -167,8 +227,15 @@ public class Tracker extends Service implements GoogleApiClient.OnConnectionFail
     public void onDestroy() {
         super.onDestroy();
         stopLocationUpdates();
+        Intent intent = new Intent("Fail");
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcastSync(intent);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(br);
         Toast.makeText(this, "Destroy", Toast.LENGTH_SHORT).show();
+        if (prefs != null) {
+            editor.putInt("points", seconds + points);
+            editor.putBoolean("tracking", false);
+            editor.apply();
+        }
     }
 
     @Nullable
